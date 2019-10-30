@@ -1,5 +1,6 @@
 package com.yss.schedule.kettle;
 
+import com.yss.schedule.comfig.JobParamConfig;
 import com.yss.schedule.entity.WorkDay;
 import com.yss.schedule.mapper.WorkDayDao;
 import org.apache.commons.lang.StringUtils;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yss
@@ -36,20 +38,6 @@ public class KettleService {
     private String dirPath;
     @Value("${com.yss.kettle.job.jobName}")
     private String jobName;
-
-
-    @Value("${com.yss.kettle.job.param.FBEGINDATE}")
-    private String FBEGINDATE;
-    @Value("${com.yss.kettle.job.param.FENDDATE}")
-    private String FENDDATE;
-    @Value("${com.yss.kettle.job.param.FIN_PF_ID}")
-    private String FIN_PF_ID;
-    @Value("${com.yss.kettle.job.param.PF_ID}")
-    private String PF_ID;
-    @Value("${com.yss.kettle.job.param.TA_PF_ID}")
-    private String TA_PF_ID;
-    @Value("${com.yss.kettle.job.param.FUNDID}")
-    private String FUNDID;
 
 
     @Value("${com.yss.kettle.host}")
@@ -71,8 +59,9 @@ public class KettleService {
 
     @Autowired
     private WorkDayDao workDayDao;
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(KettleService.class);
+    @Autowired
+    private JobParamConfig jobParamConfig;
+ private static final Logger LOGGER = LoggerFactory.getLogger(KettleService.class);
 
     /**
      * 调用kettle的转换
@@ -92,15 +81,11 @@ public class KettleService {
      */
     public void callJobTask() throws KettleException {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-        //创建资源库连接并从资源库中读取kettle任务
-        KettleDatabaseRepository repository = RepositoryCon();
-        RepositoryDirectoryInterface dir = repository.findDirectory(dirPath);
-        ObjectId jobId = repository.getJobId(jobName, dir);
-        JobMeta jobMeta = repository.loadJob(jobId, null);
-        Job job = new Job(repository, jobMeta);
 
+        String FENDDATE = jobParamConfig.getParam().get("FENDDATE");
 
         if (StringUtils.isEmpty(FENDDATE)) {
+            //如果日期为空，那么默认今天的日期
             String currentDate = sdf.format(new Date());
             FENDDATE = workDayDao.getWorKDay(currentDate, 1);
         }
@@ -108,22 +93,27 @@ public class KettleService {
             LOGGER.info("非工作日不执行：FENDDATE:{}",FENDDATE);
             return;
         }
+
+        //创建资源库连接并从资源库中读取kettle任务
+        KettleDatabaseRepository repository = RepositoryCon();
+        RepositoryDirectoryInterface dir = repository.findDirectory(dirPath);
+        ObjectId jobId = repository.getJobId(jobName, dir);
+        JobMeta jobMeta = repository.loadJob(jobId, null);
+        Job job = new Job(repository, jobMeta);
+
         job.setVariable("FENDDATE", FENDDATE);
 
-        //设置变量
-        if (StringUtils.isEmpty(FBEGINDATE)) {
-            //如果日期为空，那么默认今天的日期
+        String FBEGINDATE = workDayDao.getWorKDay(FENDDATE, Integer.parseInt(jobParamConfig.getParam().get("timeInterval")));
 
-            FBEGINDATE = workDayDao.getWorKDay(FENDDATE, 5);
-        }
         job.setVariable("FBEGINDATE", FBEGINDATE);
 
-
-
-        job.setVariable("FIN_PF_ID", FIN_PF_ID);
-        job.setVariable("PF_ID", PF_ID);
-        job.setVariable("TA_PF_ID", TA_PF_ID);
-        job.setVariable("FUNDID",FUNDID);
+        for (Map.Entry<String, String> jobParam : jobParamConfig.getParam().entrySet()) {
+            if ("FBEGINDATE".equals(jobParam.getKey())||"FENDDATE".equals(jobParam.getKey())){
+                continue;
+            }else {
+                job.setVariable(jobParam.getKey(), jobParam.getValue());
+            }
+        }
 
         LOGGER.info("环境变量：FBEGINDATE:{}，FENDDATE:{}",FBEGINDATE,FENDDATE);
 
@@ -146,7 +136,7 @@ public class KettleService {
         LOGGER.info("kettle环境初始化成功");
         // 数据库连接元对象
         // （kettle数据库连接名称(KETTLE工具右上角显示)，资源库类型，连接方式，IP，数据库名，端口，用户名，密码） //cgmRepositoryConn
-        DatabaseMeta databaseMeta = new DatabaseMeta("aaaa", "Oracle", "Native(JDBC)", host,
+        DatabaseMeta databaseMeta = new DatabaseMeta("kettle", "Oracle", "Native(JDBC)", host,
                 db, port, userName, password);
         LOGGER.info("kettle环境初始化成功");
         // 数据库形式的资源库元对象
