@@ -1,0 +1,40 @@
+server:
+  port: 9527
+
+com:
+  yss:
+    kettle:
+      host: 127.0.0.1
+      port: 1521
+      db: orcl
+      #kettle数据库账号密码
+      userName: kettle
+      password: kettle
+      #kettle登录的账号密码
+      loginName: admin
+      loginPassword: admin
+      trans:
+        filepath: C:\Users\yss\Desktop\localTest.ktr
+        switch: 0
+        cron: '*/10 * * * * ?'
+      job:
+        dirPath: /
+        jobName: wf_m_TRANS_ALL
+        switch: 1
+        cron: '*/10 * * * * ?'
+        param:
+          #设置时间后将会以时间参数运行任务，否则会默认以当前时间的前一个工作日运行
+          FBEGINDATE:
+          FENDDATE:
+          #时间间隔，开始时间和结束时间间隔
+          timeInterval: 5
+          FIN_PF_ID: IS NOT NULL
+          PF_ID: IS NOT NULL
+          TA_PF_ID: IS NOT NULL
+          FUNDID: IS NOT NULL
+spring:
+  datasource:
+    username: kettle
+    password: kettle
+    url: jdbc:oracle:thin:@127.0.0.1:1521:orcl
+    driver-class-name: oracle.jdbc.driver.OracleDriver
