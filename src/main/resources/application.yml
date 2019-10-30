@@ -22,16 +22,6 @@ com:
         jobName: wf_m_TRANS_ALL
         switch: 1
         cron: '*/10 * * * * ?'
-        param:
-
-          FBEGINDATE:
-          FENDDATE:
-
-          timeInterval: 5
-          FIN_PF_ID: IS NOT NULL
-          PF_ID: IS NOT NULL
-          TA_PF_ID: IS NOT NULL
-          FUNDID: IS NOT NULL
 spring:
   datasource:
     username: kettle
