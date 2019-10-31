@@ -56,8 +56,8 @@ public class KettleTask {
                 logger.info("kettle任务调用开始：{}",sdf.format(new Date()));
                 kettleService.callJobTask();
                 logger.info("kettle任务调用结束：{}",sdf.format(new Date()));
-            } catch (KettleException e) {
-                e.printStackTrace();
+            } catch (Exception e) {
+                logger.error("kettle调用异常",e);
             }
         }
     }

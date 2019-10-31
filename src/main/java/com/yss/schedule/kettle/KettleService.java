@@ -21,7 +21,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -61,7 +63,10 @@ public class KettleService {
     private WorkDayDao workDayDao;
     @Autowired
     private JobParamConfig jobParamConfig;
- private static final Logger LOGGER = LoggerFactory.getLogger(KettleService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(KettleService.class);
+
+
+    private SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
 
     /**
      * 调用kettle的转换
@@ -79,8 +84,8 @@ public class KettleService {
     /**
      * 调用kettle的任务
      */
-    public void callJobTask() throws KettleException {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+    public void callJobTask() throws KettleException, ParseException {
+
 
         String FENDDATE = jobParamConfig.getParam().get("FENDDATE");
 
@@ -89,8 +94,9 @@ public class KettleService {
             String currentDate = sdf.format(new Date());
             FENDDATE = workDayDao.getWorKDay(currentDate, 1);
         }
-        if (StringUtils.isEmpty(workDayDao.isWorkDay(FENDDATE))){
-            LOGGER.info("非工作日不执行：FENDDATE:{}",FENDDATE);
+
+        if (StringUtils.isEmpty(workDayDao.isWorkDay(FENDDATE)) && isNotTheLastDayOfMonth(FENDDATE)) {
+            LOGGER.info("非工作日不执行：FENDDATE:{}", FENDDATE);
             return;
         }
 
@@ -108,14 +114,13 @@ public class KettleService {
         job.setVariable("FBEGINDATE", FBEGINDATE);
 
         for (Map.Entry<String, String> jobParam : jobParamConfig.getParam().entrySet()) {
-            if ("FBEGINDATE".equals(jobParam.getKey())||"FENDDATE".equals(jobParam.getKey())){
-                continue;
-            }else {
+            if ("FBEGINDATE".equals(jobParam.getKey()) || "FENDDATE".equals(jobParam.getKey())) {
+            } else {
                 job.setVariable(jobParam.getKey(), jobParam.getValue());
             }
         }
 
-        LOGGER.info("环境变量：FBEGINDATE:{}，FENDDATE:{}",FBEGINDATE,FENDDATE);
+        LOGGER.info("环境变量：FBEGINDATE:{}，FENDDATE:{}", FBEGINDATE, FENDDATE);
 
         job.start();
         job.waitUntilFinished();
@@ -123,6 +128,23 @@ public class KettleService {
 
     }
 
+    /**
+     * 判断是否未月末
+     *
+     * @param fenddate
+     * @return
+     */
+    private  boolean isNotTheLastDayOfMonth(String fenddate) throws ParseException {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(sdf.parse(fenddate));
+        int month = calendar.get(Calendar.MONTH);
+        calendar.add(Calendar.DAY_OF_MONTH,1);
+        if (month ==  calendar.get(Calendar.MONTH)){
+            return true;
+        }else {
+            return false;
+        }
+    }
 
     /**
      * 获取资源库连接
