@@ -61,4 +61,16 @@ public class KettleTask {
             }
         }
     }
+
+    /**
+     * 为了出人行报表调用kettle
+     */
+    @Scheduled(cron = "${com.yss.kettle.month.job.cron}")
+    public void callMonthKettleJob(){
+        try {
+            kettleService.callMonthKettleJob();
+        }catch (Exception e){
+            logger.error("kettle调用失败",e);
+        }
+    }
 }

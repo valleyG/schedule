@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.xml.crypto.Data;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -66,7 +67,6 @@ public class KettleService {
     private static final Logger LOGGER = LoggerFactory.getLogger(KettleService.class);
 
 
-    private SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
 
     /**
      * 调用kettle的转换
@@ -86,20 +86,52 @@ public class KettleService {
      */
     public void callJobTask() throws KettleException, ParseException {
 
+         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
 
         String FENDDATE = jobParamConfig.getParam().get("FENDDATE");
 
         if (StringUtils.isEmpty(FENDDATE)) {
             //如果日期为空，那么默认今天的日期
             String currentDate = sdf.format(new Date());
-            FENDDATE = workDayDao.getWorKDay(currentDate, 1);
+            if (StringUtils.isEmpty(workDayDao.isWorkDay(currentDate))){
+                //如果今天是非工作日则不执行kettle
+                LOGGER.info("非工作日不执行：FENDDATE:{}", FENDDATE);
+                return;
+            }else {
+                FENDDATE = workDayDao.getWorKDay(currentDate, 1);
+            }
         }
+        callKettle(FENDDATE);
 
-        if (StringUtils.isEmpty(workDayDao.isWorkDay(FENDDATE)) && isNotTheLastDayOfMonth(FENDDATE)) {
-            LOGGER.info("非工作日不执行：FENDDATE:{}", FENDDATE);
-            return;
-        }
 
+    }
+
+    public void callMonthKettleJob( ) throws ParseException, KettleException {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+        String fenddate = getTheDayBeforeDay((sdf.format(new Date())));
+        callKettle(fenddate);
+    }
+
+    /**
+     * 获取给定时间的前一天
+     * @return
+     */
+    private String getTheDayBeforeDay(String date) throws ParseException {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+        Calendar instance = Calendar.getInstance();
+        instance.setTime(sdf.parse(date));
+        instance.add(Calendar.DAY_OF_MONTH,-1);
+        return sdf.format(instance.getTime());
+    }
+
+
+    /**
+     * 调用kettle任务
+     * @param FENDDATE
+     * @throws KettleException
+     */
+    private void callKettle(String FENDDATE) throws KettleException {
         //创建资源库连接并从资源库中读取kettle任务
         KettleDatabaseRepository repository = RepositoryCon();
         RepositoryDirectoryInterface dir = repository.findDirectory(dirPath);
@@ -124,9 +156,9 @@ public class KettleService {
 
         job.start();
         job.waitUntilFinished();
-
-
     }
+
+
 
     /**
      * 判断是否未月末
@@ -135,6 +167,8 @@ public class KettleService {
      * @return
      */
     private  boolean isNotTheLastDayOfMonth(String fenddate) throws ParseException {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(sdf.parse(fenddate));
         int month = calendar.get(Calendar.MONTH);
@@ -180,4 +214,6 @@ public class KettleService {
             throw new RuntimeException("连接失败");
         }
     }
+
+
 }

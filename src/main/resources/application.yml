@@ -16,12 +16,15 @@ com:
       trans:
         filepath: C:\Users\yss\Desktop\localTest.ktr
         switch: 0
-        cron: '*/10 * * * * ?'
+        cron: "*/10 * * * * ?"
       job:
         dirPath: /
         jobName: wf_m_TRANS_ALL
         switch: 1
-        cron: '*/10 * * * * ?'
+        cron: "*/10 * * * * ?"
+      month:
+        job:
+          cron: "3 0 0 1 * ?"
 spring:
   datasource:
     username: kettle
