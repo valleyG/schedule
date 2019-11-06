@@ -108,7 +108,7 @@ public class KettleService {
 
     public void callMonthKettleJob( ) throws ParseException, KettleException {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-        String fenddate = getTheDayBeforeDay((sdf.format(new Date())));
+        String fenddate = getTheDayBeforeDay((sdf.format(new Date())),5);
         callKettle(fenddate);
     }
 
@@ -116,15 +116,14 @@ public class KettleService {
      * 获取给定时间的前一天
      * @return
      */
-    private String getTheDayBeforeDay(String date) throws ParseException {
+    private static String getTheDayBeforeDay(String date,int days) throws ParseException {
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
         Calendar instance = Calendar.getInstance();
         instance.setTime(sdf.parse(date));
-        instance.add(Calendar.DAY_OF_MONTH,-1);
+        instance.add(Calendar.DAY_OF_MONTH,-days);
         return sdf.format(instance.getTime());
     }
-
 
     /**
      * 调用kettle任务
