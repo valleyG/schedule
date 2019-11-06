@@ -24,7 +24,7 @@ com:
         cron: "*/10 * * * * ?"
       month:
         job:
-          cron: "3 0 0 1 * ?"
+          cron: "3 0 0 5 * ?"
 spring:
   datasource:
     username: kettle
