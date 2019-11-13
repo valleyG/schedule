@@ -1,7 +1,6 @@
-package com.yss.schedule.kettle;
+package com.yss.schedule.service;
 
 import com.yss.schedule.comfig.JobParamConfig;
-import com.yss.schedule.entity.WorkDay;
 import com.yss.schedule.mapper.WorkDayDao;
 import org.apache.commons.lang.StringUtils;
 import org.pentaho.di.core.KettleEnvironment;
@@ -21,12 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.xml.crypto.Data;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 /**

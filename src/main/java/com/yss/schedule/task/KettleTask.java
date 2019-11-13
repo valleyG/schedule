@@ -1,6 +1,6 @@
 package com.yss.schedule.task;
 
-import com.yss.schedule.kettle.KettleService;
+import com.yss.schedule.service.KettleService;
 import org.pentaho.di.core.exception.KettleException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

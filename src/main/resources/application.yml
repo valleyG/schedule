@@ -20,11 +20,18 @@ com:
       job:
         dirPath: /
         jobName: wf_m_TRANS_ALL
-        switch: 1
+        switch: 0
         cron: "*/10 * * * * ?"
       month:
         job:
           cron: "3 0 0 5 * ?"
+    email:
+      title: "监管保送系统提示"
+      host: "hwsmtp.qiye.163.com"
+      port: 994
+      from: "zhuhongmin@ysstech.com"
+      username: "zhuhongmin@ysstech.com"
+      pwd: "Zhm092324"
 spring:
   datasource:
     username: kettle
